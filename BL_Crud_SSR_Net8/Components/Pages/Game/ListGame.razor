@@ -1,0 +1,44 @@
+﻿@page "/listgame"
+@using BL_Crud_SSR_Net8.Data
+@using BL_Crud_SSR_Net8.Entities
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext Context
+
+<h3>List Game</h3>
+
+@if(games.Count == 0)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Publisher</th>
+                <th>Release Year</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var game in games)
+            {
+                <tr>
+                    <td>@game.Title</td>
+                    <td>@game.Publisher</td>
+                    <td>@game.ReleaseYear</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+)
+
+@code {
+    List<Game> games = new List<Game>();
+
+    override protected async Task OnInitializedAsync()
+    {
+        games = await Context.Games.ToListAsync();
+    }
+}
