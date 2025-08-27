@@ -1,0 +1,85 @@
+﻿@page "/editgame"
+@page "/editgame/{Id:int}"
+@using BL_Crud_SSR_Net8.Data
+@using BL_Crud_SSR_Net8.Entities
+@inject AppDbContext Context
+@inject NavigationManager NavMan
+
+@if(Id is null)
+{
+    <h3>Add New Game</h3>
+}
+else
+{
+    <h3>Edit "@Currentgame.Title"</h3>
+}
+
+<EditForm Model="Currentgame" OnSubmit="HandleSubmit" FormName="GameForm">
+    <div>
+        <label for="title">Title</label>
+        <InputText id="title" class="form-control" @bind-Value="Currentgame.Title" />
+    </div>
+    <div>
+        <label for="publisher">Publisher</label>
+        <InputText id="publisher" class="form-control" @bind-Value="Currentgame.Publisher" />
+    </div>
+    <div>
+        <label for="year">Release Year</label>
+        <InputNumber id="year" class="form-control" @bind-Value="Currentgame.ReleaseYear" />
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int? Id { get; set; } = null;
+
+    [SupplyParameterFromForm]
+    Game Currentgame { get; set; } = new Game();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if(Id is not null)
+        {
+            var game = await Context.Games.FindAsync(Id);
+            if(game is not null)
+            {
+                Currentgame.Title ??= game.Title;
+                Currentgame.Publisher ??= game.Publisher;
+                Currentgame.ReleaseYear ??= game.ReleaseYear;
+            }
+        }
+    }
+
+    async Task HandleSubmit()
+    {
+        if(Id is not null)
+        {
+            await UpdateGame();
+        }
+        else
+        {
+            await CreateGame();
+        }
+    }
+
+    async Task CreateGame()
+    {
+        Context.Games.Add(Currentgame);
+        await Context.SaveChangesAsync();
+        NavMan.NavigateTo("/listgame");
+    }
+
+    async Task UpdateGame()
+    {
+        var result = await Context.Games.FindAsync(Id);
+        if(result is not null)
+        {
+            result.Title = Currentgame.Title;
+            result.Publisher = Currentgame.Publisher;
+            result.ReleaseYear = Currentgame.ReleaseYear;
+            await Context.SaveChangesAsync();
+            NavMan.NavigateTo("/listgame");
+        }
+    }
+}
