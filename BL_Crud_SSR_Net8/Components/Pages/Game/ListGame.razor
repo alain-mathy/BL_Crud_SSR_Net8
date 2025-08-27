@@ -3,11 +3,12 @@
 @using BL_Crud_SSR_Net8.Entities
 @using Microsoft.EntityFrameworkCore
 @inject AppDbContext Context
+@inject NavigationManager NavMan
 @attribute [StreamRendering]
 
 <h3>List Game</h3>
 
-@if(games.Count == 0)
+@if (games.Count == 0)
 {
     <p><em>Loading...</em></p>
 }
@@ -20,16 +21,27 @@ else
                 <th>Publisher</th>
                 <th>Release Year</th>
                 <th></th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
-            @foreach(var game in games)
+            @foreach (var game in games)
             {
                 <tr>
                     <td>@game.Title</td>
                     <td>@game.Publisher</td>
                     <td>@game.ReleaseYear</td>
                     <td><a href="editgame/@game.Id">Edit</a></td>
+                    <td>
+                        <form method="post"
+                              @formname="@($"DeleteGameForm{game.Id}")"
+                              @onsubmit="() => DeleteGame(game.Id)">
+                            <button class="btn btn-link">
+                                Delete
+                            </button>
+                            <AntiforgeryToken />
+                        </form>
+                    </td>
                 </tr>
             }
         </tbody>
@@ -43,5 +55,16 @@ else
     override protected async Task OnInitializedAsync()
     {
         games = await Context.Games.ToListAsync();
+    }
+
+    async Task DeleteGame(int id)
+    {
+        var result = await Context.Games.FindAsync(id);
+        if(result is not null)
+        {
+            Context.Games.Remove(result);
+            await Context.SaveChangesAsync();
+            NavMan.NavigateTo("/listgame");
+        }
     }
 }
